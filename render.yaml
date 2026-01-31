@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: prog2-webapi
+    runtime: docker
+    plan: free
+    region: frankfurt  # Choose closest region
+    buildCommand: dotnet publish Prog2WebApi/Prog2WebApi.csproj -c Release -o /app/publish
+    startCommand: dotnet /app/publish/Prog2WebApi.dll
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://0.0.0.0:10000
+    disk:
+      name: sqlite-data
+      mountPath: /app/data
+      sizeGB: 1
