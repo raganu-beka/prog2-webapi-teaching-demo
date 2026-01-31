@@ -42,7 +42,7 @@ namespace Prog2WebApi.Controllers
             _db.Users.Add(user);
             _db.SaveChanges();
 
-            return Ok();
+            return Ok(new { id = user.Id });
         }
 
         [HttpPost("/login")]

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Prog2WebApi.Data;
 using Prog2WebApi.Models;
 using Prog2WebApi.Models.Requests;
+using Prog2WebApi.Models.Responses;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,46 +11,80 @@ namespace Prog2WebApi.Controllers
 {
     [ApiController]
     [Route("api/posts")]
-    public class PostsController : ControllerBase
+    public class PostsController(AppDbContext dbContext) : ControllerBase
     {
-        private readonly AppDbContext _db;
-
-        // šeit notiek AppDbContext injekcija
-        public PostsController(AppDbContext dbContext)
-        {
-            _db = dbContext;
-        }
-
         [HttpGet]
         public IActionResult GetPosts()
         {
-            var allPosts = _db.Posts
-                .Select(p => new
+            var allPosts = dbContext.Posts
+                .Select(p => new PostResponse
                 {
-                    p.Id,
-                    p.Title,
-                    p.Content,
-                    p.CreatedAt,
-                    p.UserId,
-                    LikeCount = p.Likes.Count
+                    Id = p.Id,
+                    Title = p.Title,
+                    Content = p.Content,
+                    CreatedAt = p.CreatedAt,
+                    LikeCount = p.Likes.Count,
+                    Author = new UserResponse
+                    {
+                        Id = p.UserId,
+                        Username = p.User!.Username
+                    },
+                    Comments = p.Comments.Select(c => new CommentResponse
+                    {
+                        Id = c.Id,
+                        Content = c.Content,
+                        CreatedAt = c.CreatedAt,
+                        Author = c.User != null ? new UserResponse
+                        {
+                            Id = c.UserId,
+                            Username = c.User.Username
+                        } : null
+                    }).ToList()
                 })
                 .ToList();
+
             return Ok(allPosts);
         }
 
         [HttpGet("{id:int}")]
         public IActionResult GetPostById(int id)
         {
-            var post = _db.Posts.Find(id);
-            if (post == null)
-            {
-                return NotFound();
-            }
+            var post = dbContext.Posts
+                .Include(p => p.User)
+                .Include(p => p.Likes)
+                .Include(p => p.Comments)
+                    .ThenInclude(c => c.User)
+                .FirstOrDefault(p => p.Id == id);
+            
+            if (post == null) return NotFound();
 
-            return Ok(post);
+            return Ok(new PostResponse
+            {
+                Id = post.Id,
+                Title = post.Title,
+                Content = post.Content,
+                CreatedAt = post.CreatedAt,
+                LikeCount = post.LikeCount,
+                Author = new UserResponse
+                {
+                    Id = post.UserId,
+                    Username = post.User!.Username
+                },
+                Comments = post.Comments.Select(c => new CommentResponse
+                {
+                    Id = c.Id,
+                    Content = c.Content,
+                    CreatedAt = c.CreatedAt,
+                    Author = c.User != null ? new UserResponse
+                    {
+                        Id = c.UserId,
+                        Username = c.User.Username
+                    } : null
+                }).ToList()
+            });
         }
 
-        // atribūts authorize. lietotājam jābūt autorizētam
+        // atribūts Authorize. lietotājam jābūt autorizētam
         // ja ir šis atribūts - no tokena var izgūt info par lietotāju
         [Authorize]
         [HttpPost]
@@ -59,10 +94,16 @@ namespace Prog2WebApi.Controllers
             {
                 return Unauthorized();
             }
-
-            var post = Post.From(request, userId);
-            _db.Posts.Add(post);
-            _db.SaveChanges();
+            
+            var post = new Post
+            {
+                Title = request.Title,
+                Content = request.Content,
+                CreatedAt = DateTime.UtcNow,
+                UserId = userId
+            };
+            dbContext.Posts.Add(post);
+            dbContext.SaveChanges();
 
             return Ok(new { id = post.Id });
         }
@@ -76,7 +117,7 @@ namespace Prog2WebApi.Controllers
                 return Unauthorized();
             }
 
-            var existingLike = _db.Likes.FirstOrDefault(
+            var existingLike = dbContext.Likes.FirstOrDefault(
                 l => l.UserId == userId && l.PostId == postId);
 
             if (existingLike == null)
@@ -86,14 +127,14 @@ namespace Prog2WebApi.Controllers
                     PostId = postId,
                     UserId = userId,
                 };
-                _db.Likes.Add(like);
-                _db.SaveChanges();
+                dbContext.Likes.Add(like);
+                dbContext.SaveChanges();
 
                 return Ok(new { msg = "Like added." });
             }
 
-            _db.Likes.Remove(existingLike);
-            _db.SaveChanges();
+            dbContext.Likes.Remove(existingLike);
+            dbContext.SaveChanges();
 
             return Ok(new { msg = "Like removed." });
         }
@@ -115,8 +156,8 @@ namespace Prog2WebApi.Controllers
                 CreatedAt = DateTime.UtcNow
             };
 
-            _db.Comment.Add(comment);
-            _db.SaveChanges();
+            dbContext.Comment.Add(comment);
+            dbContext.SaveChanges();
 
             return Ok(new { id = comment.Id });
         }

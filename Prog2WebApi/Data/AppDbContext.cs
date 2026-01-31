@@ -37,7 +37,7 @@ namespace Prog2WebApi.Data
                 .HasOne(l => l.User)
                 .WithMany(u => u.Likes)
                 .HasForeignKey(l => l.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.ClientCascade);
 
             // Norādam Post -> Like relāciju (One-To-Many)
             modelBuilder.Entity<Like>()
@@ -56,7 +56,7 @@ namespace Prog2WebApi.Data
                 .HasOne(c => c.User)
                 .WithMany(u => u.Comments)
                 .HasForeignKey(c => c.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.ClientCascade);
 
             // Norādam Post -> Comment relāciju (One-To-Many)
             modelBuilder.Entity<Comment>()
