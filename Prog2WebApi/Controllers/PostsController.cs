@@ -161,5 +161,53 @@ namespace Prog2WebApi.Controllers
 
             return Ok(new { id = comment.Id });
         }
+
+        [Authorize]
+        [HttpDelete("{postId:int}")]
+        public IActionResult DeletePost(int postId)
+        {
+            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var post = dbContext.Posts.FirstOrDefault(p => p.Id == postId);
+
+            if (post == null) return NotFound();
+
+            if (post.UserId != userId)
+            {
+                return Forbid();
+            }
+
+            dbContext.Posts.Remove(post);
+            dbContext.SaveChanges();
+
+            return Ok(new { msg = "Post removed." });
+        }
+
+        [Authorize]
+        [HttpDelete("{postId:int}/comment/{commentId:int}")]
+        public IActionResult DeleteComment(int postId, int commentId)
+        {
+            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var comment = dbContext.Comment.FirstOrDefault(c => c.Id == commentId && c.PostId == postId);
+
+            if (comment == null) return NotFound();
+
+            if (comment.UserId != userId)
+            {
+                return Forbid();
+            }
+
+            dbContext.Comment.Remove(comment);
+            dbContext.SaveChanges();
+
+            return Ok(new { msg = "Comment removed." });
+        }
     }
 }
