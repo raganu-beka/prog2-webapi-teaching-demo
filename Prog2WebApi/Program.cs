@@ -71,14 +71,13 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // atļaut pieprasījums no front-end
-var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? []; 
 builder.Services.AddCors(options => {
     options.AddPolicy("AllowReactApp",
         policy => {
-            policy.WithOrigins(allowedOrigins)
+            policy.AllowAnyOrigin()
                 .AllowAnyHeader()
                 .AllowAnyMethod();
-        }); 
+        });
 });
 
 
