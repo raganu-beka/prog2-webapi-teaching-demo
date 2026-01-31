@@ -9,3 +9,11 @@ An educational project used to teach 12th graders web API development.
 - SQLite
 - JWT Authentication
 - Swagger/OpenAPI
+
+```bash
+cd Prog2WebApi
+dotnet run
+```
+
+API: `http://localhost:5153`
+Swagger: `http://localhost:5153/swagger`
