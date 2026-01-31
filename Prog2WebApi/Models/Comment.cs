@@ -6,7 +6,7 @@ namespace Prog2WebApi.Models
     {
         public int Id { get; set; }
         
-        [MaxLength(500)]
+        [MaxLength(1000)]
         public required string Content { get; set; }
         public DateTime CreatedAt { get; set; }
 
