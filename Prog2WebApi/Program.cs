@@ -70,12 +70,14 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// atļaut pieprasījums no localhost:3000
+// atļaut pieprasījums no front-end
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? []; 
 builder.Services.AddCors(options => {
     options.AddPolicy("AllowReactApp",
-        policy => { policy.WithOrigins("http://localhost:3000")
-            .AllowAnyHeader()
-            .AllowAnyMethod();
+        policy => {
+            policy.WithOrigins(allowedOrigins)
+                .AllowAnyHeader()
+                .AllowAnyMethod();
         }); 
 });
 
