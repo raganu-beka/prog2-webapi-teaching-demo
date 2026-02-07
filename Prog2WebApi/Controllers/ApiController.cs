@@ -2,6 +2,8 @@
 
 namespace Prog2WebApi.Controllers
 {
+    public record NameRequest(string Name);
+    
     [ApiController]
     [Route("api")]
     public class ApiController : ControllerBase
@@ -13,11 +15,9 @@ namespace Prog2WebApi.Controllers
         }
 
         [HttpPost("hello")]
-        public IActionResult HelloPost(Name name)
+        public IActionResult HelloPost(NameRequest name)
         {
-            return Ok($"Hello from the POST endpoint, {name}");
+            return Ok($"Hello from the POST endpoint, {name.Name}");
         }
     }
-
-    public record Name(string name);
 }
